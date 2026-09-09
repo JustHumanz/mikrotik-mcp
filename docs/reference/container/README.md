@@ -111,8 +111,6 @@ Restarts a container.
 Reads recent logs for a specific container.
 - Parameters:
   - `name` (required): Exact container name
-  - `tail` (optional): Number of log lines to return, default `100`
-  - `follow` (optional): Follow log stream if true
   - `device` (optional): Device title override
 - Example:
   ```
