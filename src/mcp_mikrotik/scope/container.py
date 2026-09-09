@@ -318,18 +318,14 @@ async def mikrotik_restart_container(ctx: Context, name: str, device: Optional[s
 async def mikrotik_get_container_logs(
     ctx: Context,
     name: str,
-    tail: int = 100,
-    follow: bool = False,
     device: Optional[str] = None,
 ) -> str:
     """Gets logs from a specific container on the MikroTik device.
 
     Notes:
         name: exact container name
-        tail: number of log lines to return (default: 100)
-        follow: if true, follow container logs (continuously streams new logs)
     """
-    await ctx.info(f"Getting container logs: name={name}, tail={tail}, follow={follow}")
+    await ctx.info(f"Getting container logs: name={name}")
 
     # Check if container exists
     check_cmd = f'/container print count-only where name="{name}"'
@@ -339,28 +335,16 @@ async def mikrotik_get_container_logs(
         return f"Container '{name}' not found."
 
     # Get container logs
-    if follow:
-        # For continuous follow, we can't use the MikroTik command as it would hang
-        # So we'll get the current logs instead
-        cmd = f'/container log "{name}"'
-        result = await execute_mikrotik_command(cmd, ctx, device=device)
-        if not result or result.strip() == "":
-            return f"No logs available for container '{name}'."
-        # Limit to tail lines
-        lines = result.strip().split('\n')
-        log_lines = lines[-tail:] if len(lines) > tail else lines
-        return f"CONTAINER LOGS (last {len(log_lines)} lines) - Container: {name}\n\n" + "\n".join(log_lines)
-    else:
-        cmd = f'/container log "{name}"'
-        result = await execute_mikrotik_command(cmd, ctx, device=device)
+    cmd = f'/container log print where container "{name}"'
+    result = await execute_mikrotik_command(cmd, ctx, device=device)
 
-        if not result or result.strip() == "":
-            return f"No logs available for container '{name}'."
+    if not result or result.strip() == "":
+        return f"No logs available for container '{name}'."
 
-        # Limit to tail lines
-        lines = result.strip().split('\n')
-        log_lines = lines[-tail:] if len(lines) > tail else lines
-        return f"CONTAINER LOGS (last {len(log_lines)} lines) - Container: {name}\n\n" + "\n".join(log_lines)
+    # Limit to tail lines
+    lines = result.strip().split('\n')
+    log_lines = lines[-20:] if len(lines) > 20 else lines
+    return f"CONTAINER LOGS (last {len(log_lines)} lines) - Container: {name}\n\n" + "\n".join(log_lines)
 
 
 @mcp.tool(name="get_container_info", annotations=annotate(READ, "Get Container Info"))
@@ -389,7 +373,7 @@ async def mikrotik_get_container_info(
     details = await execute_mikrotik_command(details_cmd, ctx, device=device)
 
     # Get container logs (last 20 lines)
-    log_cmd = f'/container log "{name}"'
+    log_cmd = f'/container log print where container "{name}"'
     logs = await execute_mikrotik_command(log_cmd, ctx, device=device)
 
     log_output = "No logs available"
