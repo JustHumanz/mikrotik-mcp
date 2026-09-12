@@ -23,7 +23,7 @@ async def mikrotik_list_containers(
     filters = []
 
     if name_filter:
-        filters.append(f'name~"{name_filter}"')
+        filters.append(f'name="{name_filter}"')
     if status_filter:
         filters.append(f'status="{status_filter}"')
 
@@ -88,9 +88,9 @@ async def mikrotik_create_container(
         envlist: environment variables as list (e.g., ["VAR=value", "DEBUG=1"])
         disabled: create container in disabled state
     """
-    await ctx.info(f"Creating container: name={name}, image={image}, interface={interface}")
+    await ctx.info(f"Creating container: name={name}, remote-image={image}, interface={interface}")
 
-    cmd_parts = [f"/container add name={name} image={image} interface={interface}"]
+    cmd_parts = [f"/container add name={name} remote-image={image} interface={interface}"]
 
     if hostname:
         cmd_parts.append(f' hostname={hostname}')
