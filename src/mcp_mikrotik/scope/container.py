@@ -249,6 +249,35 @@ async def mikrotik_start_container(ctx: Context, name: str, device: Optional[str
 
     return f"Container '{name}' started successfully:\n\n{status}"
 
+@mcp.tool(name="repull_container", annotations=annotate(WRITE_IDEMPOTENT, "Repull Container"))
+async def mikrotik_repull_container(ctx: Context, name: str, image: str, device: Optional[str] = None) -> str:
+    """Repulls a container on the MikroTik device.
+
+    Notes:
+        name: exact container name
+        image: the image to repull
+    """
+    await ctx.info(f"Repulling container: name={name}")
+
+    # Check if container exists
+    check_cmd = f'/container print count-only where name="{name}"'
+    count = await execute_mikrotik_command(check_cmd, ctx, device=device)
+
+    if count.strip() == "0":
+        return f"Container '{name}' not found."
+
+    # Start the container
+    cmd = f'/container repull remote-image={image} number=\"{name}\"'
+    result = await execute_mikrotik_command(cmd, ctx, device=device)
+
+    if "failure:" in result.lower() or "error" in result.lower():
+        return f"Failed to repull container: {result}"
+
+    # Verify status
+    status_cmd = f'/container print where name="{name}"'
+    status = await execute_mikrotik_command(status_cmd, ctx, device=device)
+
+    return f"Container '{name}' repulled successfully:\n\n{status}"
 
 @mcp.tool(name="stop_container", annotations=annotate(WRITE_IDEMPOTENT, "Stop Container"))
 async def mikrotik_stop_container(ctx: Context, name: str, device: Optional[str] = None) -> str:
