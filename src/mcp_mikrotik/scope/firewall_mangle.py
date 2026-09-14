@@ -15,6 +15,16 @@ async def mikrotik_create_mangle_rule(
         "return", "route", "set-priority", "sniff-pc", "sniff-tzsp",
         "strip-ipv4-options"
     ],
+    chain_filter: Literal["prerouting", "input", "forward", "output", "postrouting", "lanin", "lanout", "lanforward"], 
+    action_filter: Literal[
+        "accept", "add-dst-to-address-list", "add-src-to-address-list",
+        "change-dscp", "change-mss", "change-ttl", "clear-df",
+        "drop", "fasttrack-connection", "jump", "log",
+        "mark-connection", "mark-packet", "mark-routing", "passthrough",
+        "return", "route", "set-priority", "sniff-pc", "sniff-tzsp",
+        "strip-ipv4-options"
+    ],
+    comment_filter: Optional[str],    
     src_address: Optional[str] = None,
     dst_address: Optional[str] = None,
     src_port: Optional[str] = None,
@@ -39,16 +49,6 @@ async def mikrotik_create_mangle_rule(
     disabled: bool = False,
     log: bool = False,
     log_prefix: Optional[str] = None,
-    chain_filter: Literal["prerouting", "input", "forward", "output", "postrouting", "lanin", "lanout", "lanforward"] = None, 
-    action_filter: Literal[
-        "accept", "add-dst-to-address-list", "add-src-to-address-list",
-        "change-dscp", "change-mss", "change-ttl", "clear-df",
-        "drop", "fasttrack-connection", "jump", "log",
-        "mark-connection", "mark-packet", "mark-routing", "passthrough",
-        "return", "route", "set-priority", "sniff-pc", "sniff-tzsp",
-        "strip-ipv4-options"
-    ] = None,
-    comment_filter: Optional[str] = None,
     src_address_filter: Optional[str] = None,
     dst_address_filter: Optional[str] = None,
     protocol_filter: Optional[str] = None,
