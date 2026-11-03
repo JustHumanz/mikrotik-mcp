@@ -15,16 +15,6 @@ async def mikrotik_create_mangle_rule(
         "return", "route", "set-priority", "sniff-pc", "sniff-tzsp",
         "strip-ipv4-options"
     ],
-    chain_filter: Literal["prerouting", "input", "forward", "output", "postrouting", "lanin", "lanout", "lanforward"], 
-    action_filter: Literal[
-        "accept", "add-dst-to-address-list", "add-src-to-address-list",
-        "change-dscp", "change-mss", "change-ttl", "clear-df",
-        "drop", "fasttrack-connection", "jump", "log",
-        "mark-connection", "mark-packet", "mark-routing", "passthrough",
-        "return", "route", "set-priority", "sniff-pc", "sniff-tzsp",
-        "strip-ipv4-options"
-    ],
-    comment_filter: Optional[str],    
     src_address: Optional[str] = None,
     dst_address: Optional[str] = None,
     src_port: Optional[str] = None,
@@ -49,14 +39,6 @@ async def mikrotik_create_mangle_rule(
     disabled: bool = False,
     log: bool = False,
     log_prefix: Optional[str] = None,
-    src_address_filter: Optional[str] = None,
-    dst_address_filter: Optional[str] = None,
-    protocol_filter: Optional[str] = None,
-    in_interface_filter: Optional[str] = None,
-    out_interface_filter: Optional[str] = None,
-    packet_mark_filter: Optional[str] = None,
-    connection_mark_filter: Optional[str] = None,
-    routing_mark_filter: Optional[str] = None,
     device: Optional[str] = None
 ) -> str:
     """Creates a firewall mangle rule in the specified chain on the MikroTik device.
@@ -66,8 +48,7 @@ async def mikrotik_create_mangle_rule(
         chain: Target chain - prerouting, input, forward, output, postrouting, lanin, lanout, or lanforward
         action: Rule action - mark-packet, mark-connection, mark-routing, sniff-tzsp, change-mss, change-dscp, 
                 jump, log, passthrough, return, accept, drop, fasttrack-connection, route, set-priority, 
-                add-dst-to-address-list, add-src-to-address-list, change-ttl, clear-df, sniff-pc, strip-ipv4-options
-        
+                add-dst-to-address-list, add-src-to-address-list, change-ttl, clear-df, sniff-pc, strip-ipv4-options    
         Matching criteria (all optional - used to match traffic):
             src_address: Source IP or CIDR, e.g. "192.168.1.0/24"
             dst_address: Destination IP or CIDR
@@ -99,9 +80,6 @@ async def mikrotik_create_mangle_rule(
             log_prefix: Log message prefix (only used when log=true)
         
         Rule placement (optional - position the rule before a matching rule):
-            chain_filter: Chain to search for placement rule
-            action_filter: Action to match for placement
-            comment_filter: Comment match for placement
             src_address_filter: Source address match for placement
             dst_address_filter: Destination address match for placement
             protocol_filter: Protocol match for placement
@@ -192,41 +170,6 @@ async def mikrotik_create_mangle_rule(
         cmd += " log=yes"
         if log_prefix:
             cmd += f' log-prefix="{log_prefix}"'
-
-
-    find_parts: list[str] = []
-    if comment_filter:
-        find_parts.append(f'comment="{comment_filter}"')
-    if action_filter:
-        find_parts.append(f'action={action_filter}')
-    if chain_filter:
-        find_parts.append(f'chain={chain_filter}')
-    if src_address_filter:
-        find_parts.append(f'src-address={src_address_filter}')
-    if dst_address_filter:
-        find_parts.append(f'dst-address={dst_address_filter}')
-    if protocol_filter:
-        find_parts.append(f'protocol={protocol_filter}')
-    if in_interface_filter:
-        find_parts.append(f'in-interface="{in_interface_filter}"')
-    if out_interface_filter:
-        find_parts.append(f'out-interface="{out_interface_filter}"')
-    if packet_mark_filter:
-        find_parts.append(f'new-packet-mark="{packet_mark_filter}"')
-    if connection_mark_filter:
-        find_parts.append(f'new-connection-mark="{connection_mark_filter}"')
-    if routing_mark_filter:
-        find_parts.append(f'new-routing-mark="{routing_mark_filter}"')
-
-    find_builder = "find " + " and ".join(find_parts)
-    if find_parts:
-        check_cmd = f"/ip firewall mangle print count-only where "+ " and ".join(find_parts)
-        count = await execute_mikrotik_command(check_cmd, ctx, device=device)
-
-        if count.strip() == "0" or not count.strip().isdigit():
-            return f"No firewall mangle rules found matching the filter criteria."
-
-        cmd += f" place-before=[{find_builder}]"
 
     result = await execute_mikrotik_command(cmd, ctx, device=device)
 
